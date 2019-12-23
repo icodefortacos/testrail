@@ -1,2 +1,2 @@
-# Testrail
+# TestRail
 Installation scripts, etc
