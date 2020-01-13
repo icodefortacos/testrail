@@ -43,10 +43,10 @@ sudo echo "Running sudo apt-get update -y now"
 sleep 3s
 sudo apt-get update -y;
 sudo echo "This has been completed!"
-sudo echo "Installing Apache, PHP 7.2, Ioncube Loader 7.2, and unzip shortly..."
+sudo echo "Installing Apache, PHP 7.2, Ioncube Loader 7.2, and more!"
 sleep 5s
 #Installing Apache, PHP, MySQL and pre-requisites.
-sudo apt-get install unzip apache2 php7.2 libapache2-mod-php7.2  php7.2-curl php7.2-mbstring php7.2-xml php7.2-zip php7.2-mysql -y -qq ;
+sudo apt-get install unzip apache2 php7.2 libapache2-mod-php7.2  php7.2-curl php7.2-mbstring php7.2-xml php7.2-zip php7.2-mysql expect -y -qq ;
 
 sudo echo "This has been completed"
 sudo mkdir /var/www/html/testrail/ ;
@@ -67,8 +67,9 @@ sudo echo "This has been completed"
 echo "Installing MySQL 5.7 shortly..."
 sleep 3s
 
-export DEBIAN_FRONTEND=noninteractive
+
 # Install MySQL quietly
+export DEBIAN_FRONTEND=noninteractive
 echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | sudo debconf-set-selections
 echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | sudo debconf-set-selections
 sudo apt-get -qq install mysql-server -y > /dev/null
