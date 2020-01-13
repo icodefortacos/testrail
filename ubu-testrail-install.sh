@@ -3,6 +3,11 @@
 sudo echo "Please remember the following database password"
 sudo echo "It will be required during the installation wizard"
 read -s -p "Please enter a strong database password: " DEFAULT_PASSWORD
+sleep 3s
+sudo echo "Please remember the following MySQL Root password"
+read -s -p "Please enter a strong database password: " MYSQL_ROOT_PASSWORD
+sudo echo ""
+sudo echo "Thanks for inserting your Root Password for MySQL"
 
 sudo echo ""
 #Create TestRail directories
@@ -61,11 +66,18 @@ sudo echo "This has been completed"
 
 echo "Installing MySQL 5.7 shortly..."
 sleep 3s
-sudo apt-get install mysql-server mysql-client -y -qq ;
+
+export DEBIAN_FRONTEND=noninteractive
+# Install MySQL quietly
+echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | sudo debconf-set-selections
+echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | sudo debconf-set-selections
+sudo apt-get -qq install mysql-server -y > /dev/null
 
 sudo echo "Restarting MySQL Service..."
 sudo systemctl restart mysql;
 sudo echo "This has been completed"
+
+sleep 1s
 
 #SQL commands to be referenced later
 SQL_COMMAND_1="CREATE DATABASE testrail DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;"
@@ -74,23 +86,51 @@ SQL_COMMAND_3="GRANT ALL ON testrail.* TO 'testrail'@'localhost';"
 
 #Create TestRail Database and User
 sudo echo "Configuring your TestRail Database now..."
-mysql -u root << eof
+mysql -u root -p$MYSQL_ROOT_PASSWORD << eof
 $SQL_COMMAND_1
 eof
 
-mysql -u root << eof
+mysql -u root -p$MYSQL_ROOT_PASSWORD << eof
 $SQL_COMMAND_2
 eof
 
-mysql -u root << eof
+mysql -u root -p$MYSQL_ROOT_PASSWORD << eof
 $SQL_COMMAND_3
 eof
 
 echo "This has been completed"
 echo "Running MySQL Secure installation now"
-echo "Please read carefully"
 sleep 4s
-mysql_secure_installation
+
+tee ~/temp.sh > /dev/null << EOF
+spawn $(which mysql_secure_installation)
+
+expect "Enter password for user root:"
+send "$MYSQL_ROOT_PASSWORD\r"
+
+expect "Press y|Y for Yes, any other key for No:"
+send "n\r"
+
+expect "Change the password for root ? ((Press y|Y for Yes, any other key for No) :"
+send "n\r"
+
+expect "Remove anonymous users? (Press y|Y for Yes, any other key for No) :"
+send "y\r"
+
+expect "Disallow root login remotely? (Press y|Y for Yes, any other key for No) :"
+send "y\r"
+
+expect "Remove test database and access to it? (Press y|Y for Yes, any other key for No) :"
+send "y\r"
+
+expect "Reload privilege tables now? (Press y|Y for Yes, any other key for No) :"
+send "y\r"
+
+EOF
+
+sudo expect ~/temp.sh
+rm -v ~/temp.sh
+sudo echo "MySQL installation + setup is completed." 
 
 sudo echo "This has been completed"
 sudo echo "Activating the TestRail background task now"
